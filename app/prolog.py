@@ -154,14 +154,23 @@ def ubicacion_oficina():
 @app.route('/ubicacion_aula', methods=['GET'])
 def ubicacion_aula():
     nombre_aula = request.args.get('nombre')
-    query = f'aula("{nombre_aula}", Edificio, _)'
-    print(f"Prolog Query: {query}")  # Registro para ver la consulta
+    query = f'aula("{nombre_aula}",Edificio, _,(Lat,Long))'
+        print(f"Prolog Query: {query}")  # Registro para ver la consulta
+    
     result = list(prolog.query(query))
     print(f"Prolog Result: {result}")  # Registro para ver el resultado de la consulta
+    
     if result:
+        # Si se encuentra la oficina, procesar coordenadas
+        lat = result[0]['Lat']
+        long = result[0]['Long']
         edificio = result[0]['Edificio'].decode('utf-8') if isinstance(result[0]['Edificio'], bytes) else result[0]['Edificio']
-        return jsonify({"edificio": edificio})
-    return jsonify({"error": f"Aula '{nombre_aula}' no encontrada"}), 404
+        
+        # Devuelve el resultado en formato JSON
+        return jsonify({"edificio": edificio, "coordenadas": {'lat': lat, 'long': long}})
+    
+    # Si no se encuentra la oficina
+    return jsonify({"error": f"Oficina '{nombre_oficina}' no encontrada"}), 404
 
 @app.route('/ubicacion_lugar', methods=['GET'])
 def ubicacion_lugar():
