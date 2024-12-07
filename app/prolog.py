@@ -155,7 +155,7 @@ def ubicacion_oficina():
 def ubicacion_aula():
     nombre_aula = request.args.get('nombre')
     query = f'aula("{nombre_aula}",Edificio, _,(Lat,Long))'
-        print(f"Prolog Query: {query}")  # Registro para ver la consulta
+    print(f"Prolog Query: {query}")  # Registro para ver la consulta
     
     result = list(prolog.query(query))
     print(f"Prolog Result: {result}")  # Registro para ver el resultado de la consulta
