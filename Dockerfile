@@ -1,5 +1,5 @@
 # Usa una imagen base de Python 3.12
-FROM python:3.12-slim
+FROM python:3.9-slim
 
 # Instala SWI-Prolog y otras dependencias necesarias
 RUN apt-get update && apt-get install -y \

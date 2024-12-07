@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: flask-prolog-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    port: 5000
+    plan: free  # Cambia esto según el plan de Render que desees usar
