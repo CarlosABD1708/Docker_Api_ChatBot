@@ -13,11 +13,12 @@ sinonimos = {
     "laboratorio": "Laboratorio",
     "Baño": "Baños",
     "baño": "Baños",
-    "baños": "Baños"
-}
-
-# Lista de palabras clave específicas para la segunda verificación
-palabras_clave = ["baños", "mujer", "hombre", "Mujer", "Hombre", "Hombres", "Mujeres"]
+    "baños": "Baños",
+    "Centro de computo" : "CC",
+    "Centro de Computo" : "CC",
+    "centro de computo" : "CC",
+    "Centro De Computo" : "CC"
+ }
 
 # Lista de palabras comunes de preguntas o consultas
 palabras_de_pregunta = ["donde", "puedo", "encontrar", "como", "que", "cuando", "por", "para", "cuál", "de", "el", "la", "los", "las", "es", "esta", "está", "quién", "cuántos", "quiénes"]
@@ -26,7 +27,7 @@ palabras_de_pregunta = ["donde", "puedo", "encontrar", "como", "que", "cuando", 
 sesiones = {}
 lock = threading.Lock()
 
-# Función para cargar el archivo JSON
+# Función para cargar la lista de lugares
 def cargar_lugares():
     lugares = {
         "lugares": [
@@ -366,34 +367,27 @@ def limpiar_frase(nombre_usuario):
 
 # Función para buscar lugares de forma difusa
 def buscar_lugar_approx(nombre_usuario, lista_lugares):
+    # Si el nombre del lugar contiene la palabra "baño", mostramos todos los baños
+    if "baño" in nombre_usuario.lower():
+        resultados = [(lugar["nombre"], 100) for lugar in lista_lugares if "baño" in lugar["nombre"].lower()]
+        return resultados
+    
+    # Realizar búsqueda difusa si no es una consulta sobre baños
     for sinonimo, reemplazo in sinonimos.items():
         nombre_usuario = re.sub(r'\b' + re.escape(sinonimo) + r'\b', reemplazo, nombre_usuario, flags=re.IGNORECASE)
 
     nombres_lugares = [lugar["nombre"] for lugar in lista_lugares]
     resultados = process.extract(nombre_usuario, nombres_lugares, limit=5)
+    
     return [(lugar, score) for lugar, score in resultados if score > 80]
 
-# Función para filtrar los resultados según las palabras clave de género
-def filtrar_por_genero(resultados, genero):
-    return [(lugar, score) for lugar, score in resultados if genero.lower() in lugar.lower()]
 
 # Función para manejar la conversación de un usuario
 def manejar_interaccion(session_id, mensaje):
     lugares = cargar_lugares()
     mensaje_limpio = limpiar_frase(mensaje)
-    
-    # Revisar palabras clave de género
-    if any(palabra in mensaje.lower() for palabra in ["mujer", "mujeres"]):
-        genero = "mujer"
-        resultados = buscar_lugar_approx(mensaje_limpio, lugares)
-        resultados_filtrados = filtrar_por_genero(resultados, genero)
-        return {"resultados": resultados_filtrados, "genero": genero}
-    elif any(palabra in mensaje.lower() for palabra in ["hombre", "hombres"]):
-        genero = "hombre"
-        resultados = buscar_lugar_approx(mensaje_limpio, lugares)
-        resultados_filtrados = filtrar_por_genero(resultados, genero)
-        return {"resultados": resultados_filtrados, "genero": genero}
-    else:
-        resultados = buscar_lugar_approx(mensaje_limpio, lugares)
-        return {"resultados": resultados, "genero": None}
 
+    # Buscar lugar sin filtrar por género
+    resultados = buscar_lugar_approx(mensaje_limpio, lugares)
+    
+    return {"resultados": resultados}

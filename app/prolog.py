@@ -154,23 +154,14 @@ def ubicacion_oficina():
 @app.route('/ubicacion_aula', methods=['GET'])
 def ubicacion_aula():
     nombre_aula = request.args.get('nombre')
-    query = f'aula("{nombre_aula}",Edificio, _,(Lat,Long))'
+    query = f'aula("{nombre_aula}", Edificio, _)'
     print(f"Prolog Query: {query}")  # Registro para ver la consulta
-    
     result = list(prolog.query(query))
     print(f"Prolog Result: {result}")  # Registro para ver el resultado de la consulta
-    
     if result:
-        # Si se encuentra la oficina, procesar coordenadas
-        lat = result[0]['Lat']
-        long = result[0]['Long']
         edificio = result[0]['Edificio'].decode('utf-8') if isinstance(result[0]['Edificio'], bytes) else result[0]['Edificio']
-        
-        # Devuelve el resultado en formato JSON
-        return jsonify({"edificio": edificio, "coordenadas": {'lat': lat, 'long': long}})
-    
-    # Si no se encuentra la oficina
-    return jsonify({"error": f"Oficina '{nombre_oficina}' no encontrada"}), 404
+        return jsonify({"edificio": edificio})
+    return jsonify({"error": f"Aula '{nombre_aula}' no encontrada"}), 404
 
 @app.route('/ubicacion_lugar', methods=['GET'])
 def ubicacion_lugar():
@@ -209,34 +200,52 @@ def coordenadas_edificio():
         return jsonify({"coordenadas": {"lat": lat, "long": long}})
     return jsonify({"error": f"Edificio '{nombre_edificio}' no encontrado"}), 404
 
+
 @app.route('/buscar_lugar', methods=['POST'])
 def buscar_lugar():
-    # Obtener el nombre del lugar desde los parámetros de la solicitud
+    # Obtener parámetros de la solicitud
     session_id = request.json.get("session_id")
     nombre_lugar = request.json.get('nombre')
+    
     if not nombre_lugar:
         return jsonify({"error": "El parámetro 'nombre' es obligatorio"}), 400
-
     if not session_id:
         return jsonify({"error": "El parámetro 'session_id' es obligatorio"}), 400
 
-    # Consultar la regla `buscar_lugar` en Prolog
     try:
         # Realizar la consulta para buscar el tipo de lugar
-        resultados = list(prolog.query(f'buscar_lugar("{nombre_lugar}", Tipo)'))
+        resultados_tipo = list(prolog.query(f'buscar_lugar("{nombre_lugar}", Tipo)'))
         
-        # Verificar si se encontró el tipo
-        if not resultados:
+        if not resultados_tipo:
             return jsonify({"error": "Lugar no encontrado"}), 404
+        
+        tipo = resultados_tipo[0]["Tipo"]
 
-        tipo = resultados[0]["Tipo"]
+        # Construir la consulta para obtener las coordenadas
+        regla_coordenadas = f'coordenadas_{tipo}("{nombre_lugar}", (Lat, Long))'
+        resultados_coordenadas = list(prolog.query(regla_coordenadas))
+        
+        if not resultados_coordenadas:
+            return jsonify({
+                "nombre": nombre_lugar,
+                "tipo": tipo,
+                "error": "Coordenadas no encontradas"
+            }), 404
+
+        # Extraer coordenadas
+        coordenadas = resultados_coordenadas[0]
+        lat, lon = coordenadas["Lat"], coordenadas["Long"]
 
         # Devolver el resultado como JSON
         return jsonify({
             "nombre": nombre_lugar,
             "tipo": tipo,
+            "coordenadas": {
+                "latitud": lat,
+                "longitud": lon
+            }
         })
-        
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -287,4 +296,4 @@ def finalizar_sesion():
 
 if __name__ == '__main__':
     cargar_datos_en_prolog()  # Cargar datos al iniciar la API
-    app.run(host="0.0.0.0", port=5000)
+    app.run()
