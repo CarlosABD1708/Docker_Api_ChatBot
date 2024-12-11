@@ -296,4 +296,5 @@ def finalizar_sesion():
 
 if __name__ == '__main__':
     cargar_datos_en_prolog()  # Cargar datos al iniciar la API
-    app.run()
+    app.run(host="0.0.0.0", port=5000)
+
