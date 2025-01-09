@@ -10,10 +10,10 @@ CORS(app)  # Habilitar CORS para la API
 # Conexión a la base de datos PostgreSQL
 def obtener_conexion():
     return psycopg2.connect(
-        dbname='mapun_database',
+        dbname='mapuni',
         user='admin_user',
-        password='6sPFQ4BlUbe183EfcivR23N5lCeUePDf',
-        host='dpg-ct2ltslsvqrc738cr960-a.oregon-postgres.render.com',
+        password='Ufv8v7hIs8eh9Wkuyt3nI355MLIxLYdt',
+        host='dpg-cu03abggph6c73ci949g-a.oregon-postgres.render.com',
         port='5432'
     )
 
